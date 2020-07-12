@@ -1,7 +1,5 @@
-local lsh = {
-    paths = {'/bin', '/usr/bin'}
-}
-local utils = require 'lsh.utils'
+local lsh = {}
+local utils = require "lsh.utils"
 
 local LuaShellProcess = {
     __tostring = function(t)
@@ -28,7 +26,7 @@ end
 local function path()
     local cmds = {}
     local brigde = shell_bridge "ls"
-    for dir in utils.iter(lsh.paths) do
+    for dir in os.getenv("PATH"):gmatch("([^:]+)") do
         table.insert(cmds, brigde(dir).text)
     end
     return string.gmatch(table.concat(cmds, "\n"), "%g+")
