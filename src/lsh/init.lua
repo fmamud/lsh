@@ -1,11 +1,7 @@
 local lsh = {}
 local utils = require "lsh.utils"
 
-local LuaShellProcess = {
-    __tostring = function(t)
-        return t.text
-    end
-}
+local LuaShellProcess
 
 local function ProcessResult(name, text, errorcode)
     local new = {name = name, text = text, errorcode = errorcode}
@@ -13,19 +9,33 @@ local function ProcessResult(name, text, errorcode)
     return new
 end
 
-local function shell_bridge(name)
-    return function(...)
-        local cmd = string.format("%s %s", name, table.concat({...}, " "))
-        local handle = io.popen(cmd)
-        local result = ProcessResult(name, handle:read("*a"), errorcode)
+LuaShellProcess = {
+    __tostring = function(t)
+        return t.text or string.format("%s shell function", t.name)
+    end,
+    __bor = function(pin, pout)
+        return pout(pin.text)
+    end,
+    __call = function(...)
+        local params = {...}
+        local cmd = params[1] or error('cmd not found')
+        local cmdargs = string.format("%s %s", cmd.name, select(2, table.unpack(params)))
+        local handle = io.popen(cmdargs)
+        local result = ProcessResult(cmd.name, handle:read("*a"), errorcode)
         handle:close()
         return result
     end
+}
+
+local function ProcessCmd(name, cmd)
+    local new = {name = name, cmd = cmd or name}
+    setmetatable(new, LuaShellProcess)
+    return new
 end
 
 local function path()
     local cmds = {}
-    local brigde = shell_bridge "ls"
+    local brigde = ProcessCmd("ls")
     for dir in os.getenv("PATH"):gmatch("([^:]+)") do
         table.insert(cmds, brigde(dir).text)
     end
@@ -34,12 +44,11 @@ end
 
 function lsh.import_path(t)
     local opt = t or {}
-    local path = path()
-    for name in path do
-        if not opt.overwrite and lsh[name] then
-            utils.show("warning: the '%s' command already exists")
+    for name in path() do
+        if not opt.overwrite and _G[name] then
+            utils.show("warning: the '%s' command already exists", name)
         else
-            _G[name] = shell_bridge(name)
+            _G[name] = ProcessCmd(name)
             if opt.import_type == "qualified" then
                 lsh[name] = _G[name]
             end
