@@ -3,16 +3,17 @@ local utils = require "lsh.utils"
 
 local LuaShellProcess
 
+local function LshModel(t)
+    setmetatable(t, LuaShellProcess)
+    return t
+end
+
 function lsh.ProcessResult(name, text, errorcode)
-    local new = {name = name, text = text, errorcode = errorcode}
-    setmetatable(new, LuaShellProcess)
-    return new
+    return LshModel {name = name, text = text, errorcode = errorcode}
 end
 
 function lsh.ProcessCmd(name, cmd)
-    local new = {name = name, cmd = cmd or name}
-    setmetatable(new, LuaShellProcess)
-    return new
+    return LshModel {name = name, cmd = cmd or name}
 end
 
 LuaShellProcess = {
@@ -20,7 +21,7 @@ LuaShellProcess = {
         return t.text or string.format("%s shell function", t.name)
     end,
     __bor = function(pin, pout)
-        local cmd = ProcessCmd(pout.name .. "<<<" .. pin.text)
+        local cmd = lsh.ProcessCmd(pout.name .. "<<<" .. pin.text)
         return cmd().text
     end,
     __call = function(...)
@@ -28,7 +29,7 @@ LuaShellProcess = {
         local cmd = params[1] or error('cmd not found')
         local cmdargs = string.format("%s %s", cmd.name, table.concat(utils.slice(params, 2), " "))
         local handle = io.popen(cmdargs)
-        local result = ProcessResult(cmd.name, handle:read("*a"), errorcode)
+        local result = lsh.ProcessResult(cmd.name, handle:read("*a"), errorcode)
         handle:close()
         return result
     end
@@ -36,7 +37,7 @@ LuaShellProcess = {
 
 local function path()
     local cmds = {}
-    local brigde = ProcessCmd("ls")
+    local brigde = lsh.ProcessCmd("ls")
     for dir in os.getenv("PATH"):gmatch("([^:]+)") do
         table.insert(cmds, brigde(dir).text)
     end
@@ -54,7 +55,7 @@ function lsh.import_path(t)
         if overwrite == false and target[name] then
             utils.show("warning: the '%s' command already exists", name)
         else
-            target[name] = ProcessCmd(name)
+            target[name] = lsh.ProcessCmd(name)
         end
     end
 end
