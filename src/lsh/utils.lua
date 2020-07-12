@@ -26,4 +26,10 @@ function map(fn, t)
     return value
 end
 
+function utils.slice(t, idx)
+    local result = {}
+    table.move(t, idx, #t, 1, result)
+    return result
+end
+
 return utils

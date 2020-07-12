@@ -9,29 +9,30 @@ local function ProcessResult(name, text, errorcode)
     return new
 end
 
+local function ProcessCmd(name, cmd)
+    local new = {name = name, cmd = cmd or name}
+    setmetatable(new, LuaShellProcess)
+    return new
+end
+
 LuaShellProcess = {
     __tostring = function(t)
         return t.text or string.format("%s shell function", t.name)
     end,
     __bor = function(pin, pout)
-        return pout(pin.text)
+        local cmd = ProcessCmd(pout.name .. "<<<" .. pin.text)
+        return cmd().text
     end,
     __call = function(...)
         local params = {...}
         local cmd = params[1] or error('cmd not found')
-        local cmdargs = string.format("%s %s", cmd.name, select(2, table.unpack(params)))
+        local cmdargs = string.format("%s %s", cmd.name, table.concat(utils.slice(params, 2), " "))
         local handle = io.popen(cmdargs)
         local result = ProcessResult(cmd.name, handle:read("*a"), errorcode)
         handle:close()
         return result
     end
 }
-
-local function ProcessCmd(name, cmd)
-    local new = {name = name, cmd = cmd or name}
-    setmetatable(new, LuaShellProcess)
-    return new
-end
 
 local function path()
     local cmds = {}
