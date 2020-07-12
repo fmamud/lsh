@@ -1,5 +1,5 @@
 package = "lsh"
-version = "0.1"
+version = "0-1"
 source = {
    url = "git://github.com/fmamud/lsh"
 }
