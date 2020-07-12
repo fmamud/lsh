@@ -3,13 +3,13 @@ local utils = require "lsh.utils"
 
 local LuaShellProcess
 
-local function ProcessResult(name, text, errorcode)
+function lsh.ProcessResult(name, text, errorcode)
     local new = {name = name, text = text, errorcode = errorcode}
     setmetatable(new, LuaShellProcess)
     return new
 end
 
-local function ProcessCmd(name, cmd)
+function lsh.ProcessCmd(name, cmd)
     local new = {name = name, cmd = cmd or name}
     setmetatable(new, LuaShellProcess)
     return new
@@ -45,14 +45,16 @@ end
 
 function lsh.import_path(t)
     local opt = t or {}
+    local qualified, overwrite = opt.qualified or false, opt.overwrite or false
     for name in path() do
-        if not opt.overwrite and _G[name] then
+        local target = _G
+        if qualified == true then
+            target = lsh
+        end
+        if overwrite == false and target[name] then
             utils.show("warning: the '%s' command already exists", name)
         else
-            _G[name] = ProcessCmd(name)
-            if opt.import_type == "qualified" then
-                lsh[name] = _G[name]
-            end
+            target[name] = ProcessCmd(name)
         end
     end
 end
