@@ -18,14 +18,6 @@ function utils.dir(t)
     end
 end
 
-function map(fn, t)
-    local value = {}
-    for item in utils.iter(t) do
-        table.insert(fn(item))
-    end
-    return value
-end
-
 function utils.slice(t, idx)
     local result = {}
     table.move(t, idx, #t, 1, result)
