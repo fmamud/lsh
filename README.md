@@ -5,6 +5,10 @@ Lua Shell Toolkit
 
 For fun. I've had a look and found some other projects that do exaclty the same thing ([here](https://github.com/zserge/luash), [here](https://github.com/stevedonovan/luaish) and [here](https://github.com/ncopa/lua-shell)), but not exaclty the way I wanted.
 
+I really the idea of zero dependencies.
+
+## How to use
+
 You can import your path commands into your Lua repl trought `lsh.import_path(opt)` function:
 
 ```lua
@@ -25,6 +29,26 @@ lsh.import_path()
 curl 'http://example.com' -- will execute curl shell command and print the url contents
 cat '/tmp/file'
 ls '/tmp'
+```
+
+You can have more advanced usage:
+
+```lua
+content = cat '/tmp/file' -- the result of cat will be stored in content variable
+print(content)
+
+books = grep('books', '/tmp/file') -- will execute "grep books '/tmp/file'" and will store in books variable
+print("books", books)
+```
+
+You can use `make repl` and will raise lua locally with lsh module propertly imported.
+
+### LuaRocks module
+
+You can use LuaRocks [lsh module](https://luarocks.org/modules/fmamud/lsh):
+
+```sh
+luarocks install lsh
 ```
 
 ## lsh module
